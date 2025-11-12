@@ -14,6 +14,8 @@ import {
   Brain, Network, BarChart3, Zap, Activity, Eye, ArrowUpRight,
   ArrowDownRight, Target, ShieldCheck, Lock, Database, Cpu
 } from 'lucide-react';
+import GeoAnalyticsMap from '@/components/ui/GeoAnalyticsMap';
+import AlertMonitoring from '@/components/ui/AlertMonitoring';
 
 const AnalyticsDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
