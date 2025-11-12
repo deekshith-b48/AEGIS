@@ -34,6 +34,9 @@
     "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
-    "@types/maplibre-gl": "^1.14.0"
+    "@types/maplibre-gl": "^1.14.0",
+    "@types/deck.gl__react": "^8.8.0",
+    "@types/deck.gl__layers": "^8.8.0",
+    "@types/deck.gl__core": "^8.8.0"
   }
 }
