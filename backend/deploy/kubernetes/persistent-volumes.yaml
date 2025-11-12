@@ -1,0 +1,258 @@
+---
+# Project AEGIS Persistent Volume Claims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aegis-uploads-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+    storage-type: uploads
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: "efs-storage"  # Adjust for your storage class
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aegis-logs-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+    storage-type: logs
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp2-storage"  # Adjust for your storage class
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aegis-models-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+    storage-type: models
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp3-storage"  # Adjust for your storage class
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# Database Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: database
+    storage-type: database
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "io2-storage"  # High-performance storage for database
+  resources:
+    requests:
+      storage: 500Gi
+
+---
+# Redis Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: cache
+    storage-type: cache
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp2-storage"
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# Kafka Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kafka-data-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: messaging
+    storage-type: messaging
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp2-storage"
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+# Backup Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aegis-backups-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backup
+    storage-type: backups
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: "s3-storage"  # Or use S3 directly
+  resources:
+    requests:
+      storage: 500Gi
+
+---
+# Monitoring Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: monitoring
+    storage-type: monitoring
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp2-storage"
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: monitoring
+    storage-type: monitoring
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp2-storage"
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Elasticsearch Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elasticsearch-data-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: logging
+    storage-type: logging
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp3-storage"
+  resources:
+    requests:
+      storage: 200Gi
+
+---
+# Jaeger Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jaeger-data-pvc
+  namespace: aegis
+  labels:
+    app: aegis
+    component: tracing
+    storage-type: tracing
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: "gp2-storage"
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# Storage Class Definitions (if needed)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: aegis-efs-storage
+  labels:
+    app: aegis
+    storage-type: efs
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-12345678  # Replace with actual EFS ID
+  directoryPerms: "777"
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: aegis-fast-storage
+  labels:
+    app: aegis
+    storage-type: fast
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"
+  encrypted: "true"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: aegis-backup-storage
+  labels:
+    app: aegis
+    storage-type: backup
+provisioner: kubernetes.io/no-provisioner
+parameters:
+  type: gp3
+  iops: "1000"
+  throughput: "125"
+  encrypted: "true"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
