@@ -1,0 +1,288 @@
+# Project AEGIS Development Docker Compose Configuration
+# Optimized for development with hot reload and debugging
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database with PostGIS
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: aegis-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aegis_db_dev
+      POSTGRES_USER: aegis_user
+      POSTGRES_PASSWORD: aegis_dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./docker/init/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/init/postgis-init.sql:/docker-entrypoint-initdb.d/postgis-init.sql
+      - ./docker/dev/postgres-entrypoint.sh:/docker-entrypoint-initdb.d/10-entrypoint.sh
+    ports:
+      - "5433:5432"  # Different port for dev
+    networks:
+      - aegis-dev-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: aegis-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass aegis_dev_redis
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"  # Different port for dev
+    networks:
+      - aegis-dev-network
+
+  # Kafka for Development
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: aegis-zookeeper-dev
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_dev_data:/var/lib/zookeeper/data
+    networks:
+      - aegis-dev-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: aegis-kafka-dev
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093,PLAINTEXT_INTERNAL://kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_DELETE_TOPIC_ENABLE: true
+    volumes:
+      - kafka_dev_data:/var/lib/kafka/data
+    ports:
+      - "9093:9093"  # Different port for dev
+    networks:
+      - aegis-dev-network
+
+  # Project AEGIS Backend (Development Mode)
+  aegis-backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: aegis-backend-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
+    environment:
+      # Development Configuration
+      AEGIS_ENV: development
+      LOG_LEVEL: DEBUG
+      DEBUG: true
+
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: aegis_db_dev
+      DB_USER: aegis_user
+      DB_PASSWORD: aegis_dev_password
+      DB_SSL_MODE: disable
+
+      # Redis Configuration
+      REDIS_URL: redis://:aegis_dev_redis@redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: aegis_dev_redis
+
+      # Kafka Configuration
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29093
+
+      # Security Configuration
+      SECRET_KEY: dev-secret-key-not-for-production
+      JWT_SECRET_KEY: dev-jwt-secret-key-not-for-production
+
+      # Development Settings
+      RELOAD: true
+      WORKERS: 1
+      ACCESS_LOG: true
+
+      # External API Mocks
+      MOCK_EXTERNAL_APIS: true
+      NPCI_API_MOCK: true
+      NCRP_API_MOCK: true
+
+    volumes:
+      - .:/app  # Mount entire codebase for hot reload
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./models:/app/models
+      - ./static:/app/static
+    ports:
+      - "8001:8000"  # Different port for dev
+      - "5678:5678"  # Debug port
+    networks:
+      - aegis-dev-network
+    # Enable interactive mode for debugging
+    stdin_open: true
+    tty: true
+
+  # Database Migration Service
+  aegis-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: aegis-migrate-dev
+    depends_on:
+      postgres:
+        condition: service_started
+    environment:
+      AEGIS_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: aegis_db_dev
+      DB_USER: aegis_user
+      DB_PASSWORD: aegis_dev_password
+    volumes:
+      - .:/app
+    command: python -m alembic upgrade head
+    networks:
+      - aegis-dev-network
+    profiles:
+      - migrate
+
+  # Development Tools
+  adminer:
+    image: adminer:latest
+    container_name: aegis-adminer-dev
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    networks:
+      - aegis-dev-network
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: aegis-redis-commander-dev
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:aegis_dev_redis
+    ports:
+      - "8083:8081"
+    networks:
+      - aegis-dev-network
+
+  # Kafka UI for Development
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: aegis-kafka-ui-dev
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_started
+    environment:
+      KAFKA_CLUSTERS_0_NAME: dev-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29093
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8084:8080"
+    networks:
+      - aegis-dev-network
+
+  # Jupyter Notebook for Data Science and ML Development
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    container_name: aegis-jupyter-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    environment:
+      JUPYTER_ENABLE_LAB: yes
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: aegis_db_dev
+      POSTGRES_USER: aegis_user
+      POSTGRES_PASSWORD: aegis_dev_password
+      REDIS_HOST: redis
+      REDIS_PASSWORD: aegis_dev_redis
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data
+      - ./models:/home/jovyan/models
+    ports:
+      - "8888:8888"
+    networks:
+      - aegis-dev-network
+    profiles:
+      - jupyter
+
+  # API Documentation Server
+  api-docs:
+    build:
+      context: .
+      dockerfile: Dockerfile.docs
+    container_name: aegis-api-docs-dev
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    networks:
+      - aegis-dev-network
+    profiles:
+      - docs
+
+  # Load Testing Service
+  k6:
+    image: grafana/k6:latest
+    container_name: aegis-k6-dev
+    restart: unless-stopped
+    volumes:
+      - ./tests/load:/scripts
+    environment:
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+    ports:
+      - "6565:6565"
+    networks:
+      - aegis-dev-network
+    profiles:
+      - load-test
+    command: ["k6", "run", "--vus", "10", "--duration", "30s", "/scripts/smoke-test.js"]
+
+# Development volumes
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  kafka_dev_data:
+    driver: local
+  zookeeper_dev_data:
+    driver: local
+
+# Development network
+networks:
+  aegis-dev-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
