@@ -144,6 +144,7 @@ export default function RootLayout({
                     <li><Link href="/" className="text-gray-400 hover:text-orange-400 transition-colors">Home</Link></li>
                     <li><Link href="/citizen" className="text-gray-400 hover:text-orange-400 transition-colors">File Complaint</Link></li>
                     <li><Link href="/lea" className="text-gray-400 hover:text-orange-400 transition-colors">LEA Dashboard</Link></li>
+                    <li><Link href="/dashboard" className="text-gray-400 hover:text-orange-400 transition-colors">Analytics</Link></li>
                   </ul>
                 </div>
                 <div>
