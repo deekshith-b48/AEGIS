@@ -1,0 +1,282 @@
+---
+# Project AEGIS Kubernetes ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aegis-config
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+data:
+  # Application Configuration
+  AEGIS_ENV: "production"
+  LOG_LEVEL: "INFO"
+  DEBUG: "false"
+  APP_NAME: "Project AEGIS"
+  APP_VERSION: "2.0.0"
+  APP_HOST: "0.0.0.0"
+  APP_PORT: "8000"
+
+  # Database Configuration
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "aegis_db"
+  DB_USER: "aegis_user"
+  DB_SSL_MODE: "prefer"
+  DB_POOL_SIZE: "20"
+  DB_MAX_OVERFLOW: "30"
+  DB_POOL_TIMEOUT: "30"
+  DB_POOL_RECYCLE: "3600"
+  DB_ECHO: "false"
+
+  # Redis Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_MAX_CONNECTIONS: "100"
+
+  # Kafka Configuration
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  KAFKA_TOPIC_PREFIX: "aegis"
+  KAFKA_CONSUMER_GROUP: "aegis-consumers"
+  KAFKA_AUTO_OFFSET_RESET: "earliest"
+  KAFKA_ENABLE_AUTO_COMMIT: "true"
+  KAFKA_SESSION_TIMEOUT_MS: "30000"
+  KAFKA_HEARTBEAT_INTERVAL_MS: "3000"
+
+  # Security Configuration
+  JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  JWT_REFRESH_TOKEN_EXPIRE_DAYS: "7"
+
+  # CORS Configuration
+  CORS_ORIGINS: "https://aegis.gov.in,https://admin.aegis.gov.in"
+  CORS_ALLOW_CREDENTIALS: "true"
+  CORS_ALLOW_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
+  CORS_ALLOW_HEADERS: "*"
+
+  # Rate Limiting
+  RATE_LIMIT_PER_MINUTE: "60"
+  RATE_LIMIT_BURST: "10"
+  RATE_LIMIT_STORAGE: "redis://redis-service:6379"
+
+  # File Upload Configuration
+  MAX_UPLOAD_SIZE: "50MB"
+  UPLOAD_PATH: "/app/uploads"
+  ALLOWED_EXTENSIONS: "pdf,doc,docx,jpg,jpeg,png,gif,mp4,avi,mov"
+  UPLOAD_CHUNK_SIZE: "8192"
+
+  # AI Model Configuration
+  AI_MODEL_PATH: "/app/models"
+  AI_ENABLE_GPU: "false"
+  AI_MODEL_TIMEOUT: "60"
+  AI_BATCH_SIZE: "32"
+  AI_MAX_WORKERS: "4"
+
+  # CST Transformer Configuration
+  CST_MODEL_VERSION: "1.0.0"
+  CST_MODEL_PATH: "/app/models/cst_transformer"
+  CST_MAX_PREDICTIONS: "10"
+  CST_CONFIDENCE_THRESHOLD: "0.7"
+
+  # Federated Causal Graph Configuration
+  FCG_MODEL_VERSION: "1.0.0"
+  FCG_MODEL_PATH: "/app/models/federated_causal_graph"
+  FCG_UPDATE_INTERVAL: "300"
+  FCG_MIN_DATA_POINTS: "100"
+
+  # Behavioral Digital Twin Configuration
+  BDT_MODEL_VERSION: "1.0.0"
+  BDT_MODEL_PATH: "/app/models/behavioral_digital_twin"
+  BDT_SIMULATION_HORIZON: "24"
+  BDT_STATE_SIZE: "1000"
+
+  # Risk Scoring Engine Configuration
+  RSE_MODEL_VERSION: "1.0.0"
+  RSE_MODEL_PATH: "/app/models/risk_scoring_engine"
+  RSE_THRESHOLD_HIGH: "0.8"
+  RSE_THRESHOLD_MEDIUM: "0.6"
+  RSE_THRESHOLD_LOW: "0.4"
+
+  # Privacy and Security Configuration
+  K_ANONYMITY_K: "50"
+  DIFFERENTIAL_PRIVACY_EPSILON: "0.5"
+  SMPC_PARTIES: "3"
+  ENCRYPTION_KEY_ROTATION_DAYS: "30"
+  DATA_RETENTION_DAYS: "365"
+
+  # Alert System Configuration
+  ALERT_BATCH_SIZE: "100"
+  ALERT_RETRY_ATTEMPTS: "3"
+  ALERT_RETRY_DELAY: "5"
+  ALERT_MAX_PER_MINUTE: "1000"
+
+  # Performance Configuration
+  ENABLE_CACHING: "true"
+  CACHE_TTL: "300"
+  CACHE_MAX_SIZE: "10000"
+  ENABLE_COMPRESSION: "true"
+  COMPRESSION_LEVEL: "6"
+
+  # Monitoring and Metrics Configuration
+  ENABLE_METRICS: "true"
+  METRICS_PORT: "9090"
+  METRICS_PATH: "/metrics"
+
+  # Jaeger Tracing Configuration
+  JAEGER_ENABLED: "true"
+  JAEGER_AGENT_HOST: "jaeger-service"
+  JAEGER_AGENT_PORT: "6831"
+  JAEGER_SAMPLER_TYPE: "const"
+  JAEGER_SAMPLER_PARAM: "1"
+
+  # Health Check Configuration
+  HEALTH_CHECK_INTERVAL: "30"
+  HEALTH_CHECK_TIMEOUT: "10"
+  HEALTH_CHECK_RETRIES: "3"
+
+  # Feature Flags
+  ENABLE_WEBHOOKS: "true"
+  ENABLE_REAL_TIME_UPDATES: "true"
+  ENABLE_ADVANCED_ANALYTICS: "true"
+  ENABLE_MACHINE_LEARNING: "true"
+  ENABLE_BLOCKCHAIN_AUDIT: "true"
+  ENABLE_DIGITAL_CORDON: "true"
+  ENABLE_MULTI_CHANNEL_ALERTS: "true"
+
+  # Logging Configuration
+  LOG_FORMAT: "json"
+  LOG_ROTATION: "daily"
+  LOG_RETENTION: "30"
+  LOG_LEVEL_SQL: "WARN"
+
+---
+# External Services ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aegis-external-services
+  namespace: aegis
+  labels:
+    app: aegis
+    component: external-services
+data:
+  # External API URLs
+  NPCI_API_URL: "https://api.npci.org"
+  NCRP_API_URL: "https://ncrp.gov.in/api"
+  I4C_API_URL: "https://i4c.gov.in/api"
+  CFCFRMS_API_URL: "https://cfcfrms.gov.in/api"
+
+  # Email Configuration
+  SMTP_HOST: "smtp.gov.in"
+  SMTP_PORT: "587"
+  SMTP_USE_TLS: "true"
+  EMAIL_FROM: "aegis@aegis.gov.in"
+  EMAIL_FROM_NAME: "Project AEGIS"
+
+  # Monitoring URLs
+  PROMETHEUS_GATEWAY_URL: "http://prometheus-service:9090"
+  GRAFANA_URL: "http://grafana-service:3000"
+  JAEGER_UI_URL: "http://jaeger-service:16686"
+
+---
+# AI Models ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aegis-ai-models
+  namespace: aegis
+  labels:
+    app: aegis
+    component: ai-models
+data:
+  # Model Configuration Files
+  cst_transformer_config.json: |
+    {
+      "model_type": "cst_transformer",
+      "version": "1.0.0",
+      "input_features": [
+        "complaint_type",
+        "amount",
+        "location",
+        "time_of_day",
+        "day_of_week",
+        "scammer_details"
+      ],
+      "output_features": [
+        "location_risk_score",
+        "time_window_risk",
+        "confidence_interval"
+      ],
+      "model_parameters": {
+        "sequence_length": 24,
+        "hidden_size": 512,
+        "num_layers": 6,
+        "dropout": 0.1,
+        "learning_rate": 0.001
+      },
+      "training_parameters": {
+        "batch_size": 32,
+        "epochs": 100,
+        "validation_split": 0.2,
+        "early_stopping_patience": 10
+      }
+    }
+
+  federated_causal_graph_config.json: |
+    {
+      "model_type": "federated_causal_graph",
+      "version": "1.0.0",
+      "graph_parameters": {
+        "max_nodes": 10000,
+        "edge_threshold": 0.1,
+        "causal_strength_threshold": 0.05
+      },
+      "federated_parameters": {
+        "min_participants": 3,
+        "privacy_budget": 1.0,
+        "aggregation_method": "secure_aggregation"
+      }
+    }
+
+  behavioral_digital_twin_config.json: |
+    {
+      "model_type": "behavioral_digital_twin",
+      "version": "1.0.0",
+      "behavioral_parameters": {
+        "state_size": 1000,
+        "action_space_size": 100,
+        "observation_space_size": 500
+      },
+      "simulation_parameters": {
+        "max_steps": 1000,
+        "time_step": 3600,
+        "deterministic": false
+      }
+    }
+
+  risk_scoring_engine_config.json: |
+    {
+      "model_type": "risk_scoring_engine",
+      "version": "1.0.0",
+      "ensemble_parameters": {
+        "models": [
+          "random_forest",
+          "gradient_boosting",
+          "logistic_regression",
+          "neural_network"
+        ],
+        "voting_method": "weighted_average",
+        "weights": [0.3, 0.3, 0.2, 0.2]
+      },
+      "feature_engineering": {
+        "categorical_features": ["complaint_type", "victim_location"],
+        "numerical_features": ["amount", "time_since_complaint"],
+        "text_features": ["victim_statement", "scammer_details"]
+      },
+      "thresholds": {
+        "high_risk": 0.8,
+        "medium_risk": 0.6,
+        "low_risk": 0.4
+      }
+    }
