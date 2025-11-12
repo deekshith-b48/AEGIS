@@ -1,0 +1,71 @@
+# Project AEGIS Development Dockerfile
+# Optimized for development with hot reload and debugging tools
+
+FROM python:3.10-slim as development
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    AEGIS_ENV=development \
+    DEBUG=true
+
+# Install system dependencies including development tools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    vim \
+    nano \
+    htop \
+    tree \
+    wget \
+    netcat-openbsd \
+    postgresql-client \
+    libpq-dev \
+    libgdal-dev \
+    gdal-bin \
+    libproj-dev \
+    libgeos-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python development tools
+RUN pip install --upgrade pip setuptools wheel
+
+# Create application directory
+RUN mkdir -p /app
+WORKDIR /app
+
+# Copy requirements first for better layer caching
+COPY requirements.txt .
+COPY requirements-dev.txt .
+COPY tests/requirements-test.txt .
+
+# Install Python dependencies including development tools
+RUN pip install -r requirements.txt && \
+    pip install -r requirements-dev.txt && \
+    pip install -r tests/requirements-test.txt
+
+# Install debugging tools
+RUN pip install ipdb pdbpp icecream
+
+# Copy application code
+COPY . .
+
+# Create non-root user (but keep root for development flexibility)
+RUN groupadd -r aegis && useradd -r -g aegis aegis && \
+    chown -R aegis:aegis /app
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/logs /app/uploads /app/static /app/temp /app/models && \
+    chown -R aegis:aegis /app/logs /app/uploads /app/static /app/temp /app/models
+
+# Install pre-commit hooks
+RUN pre-commit install
+
+# Expose ports
+EXPOSE 8000 5678 9090
+
+# Default command for development with hot reload
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]
