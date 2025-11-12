@@ -1,0 +1,326 @@
+---
+# Project AEGIS Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: aegis-backend-service
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+    service.beta.kubernetes.io/load-balancer-source-ranges: "0.0.0.0/0"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: "service.k8s.aws/nlb"  # AWS NLB, adjust for your cloud provider
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: aegis
+    component: backend
+  sessionAffinity: None
+
+---
+# Internal Service for Backend Communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: aegis-backend-internal
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+    service-type: internal
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"  # AWS internal LB
+spec:
+  type: LoadBalancer
+  loadBalancerClass: "service.k8s.aws/nlb"
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: aegis
+    component: backend
+  sessionAffinity: None
+
+---
+# Headless Service for StatefulSets
+apiVersion: v1
+kind: Service
+metadata:
+  name: aegis-backend-headless
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+    service-type: headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: aegis
+    component: backend
+  publishNotReadyAddresses: true
+
+---
+# Metrics Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: aegis-backend-metrics
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+    service-type: metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: aegis
+    component: backend
+
+---
+# API Gateway Service (if using API Gateway)
+apiVersion: v1
+kind: Service
+metadata:
+  name: aegis-api-gateway
+  namespace: aegis
+  labels:
+    app: aegis
+    component: api-gateway
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-certificate-arn: "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: "service.k8s.aws/nlb"
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: aegis
+    component: backend
+
+---
+# WebSocket Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: aegis-websocket-service
+  namespace: aegis
+  labels:
+    app: aegis
+    component: websocket
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "tcp"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: "service.k8s.aws/nlb"
+  ports:
+  - name: websocket
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: aegis
+    component: backend
+
+---
+# Ingress Configuration (if using Ingress Controller)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aegis-backend-ingress
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://aegis.gov.in,https://admin.aegis.gov.in"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  tls:
+  - hosts:
+    - aegis.gov.in
+    - api.aegis.gov.in
+    - admin.aegis.gov.in
+    secretName: aegis-tls
+  rules:
+  - host: aegis.gov.in
+    http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: aegis-backend-service
+            port:
+              number: 8000
+  - host: api.aegis.gov.in
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: aegis-backend-service
+            port:
+              number: 8000
+  - host: admin.aegis.gov.in
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: aegis-backend-service
+            port:
+              number: 8000
+
+---
+# Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: aegis-backend-network-policy
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+spec:
+  podSelector:
+    matchLabels:
+      app: aegis
+      component: backend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    - podSelector:
+        matchLabels:
+          app: aegis
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 9090
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - namespaceSelector:
+        matchLabels:
+          name: database
+    - namespaceSelector:
+        matchLabels:
+          name: cache
+    - namespaceSelector:
+        matchLabels:
+          name: messaging
+    - namespaceSelector:
+        matchLabels:
+          name: external-apis
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis
+    - protocol: TCP
+      port: 9092  # Kafka
+    - protocol: TCP
+      port: 443   # HTTPS
+    - protocol: TCP
+      port: 80    # HTTP
+
+---
+# Service Monitor for Prometheus Operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: aegis-backend-servicemonitor
+  namespace: aegis
+  labels:
+    app: aegis
+    component: backend
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: aegis
+      component: backend
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+    honorLabels: true
