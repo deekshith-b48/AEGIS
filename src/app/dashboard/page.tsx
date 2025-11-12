@@ -312,83 +312,86 @@ const AnalyticsDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Eye className="h-5 w-5 text-blue-600 mr-2" />
-                Recent Predictions
-              </CardTitle>
-              <CardDescription>Latest AI predictions and their outcomes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { id: 'P2024-001', location: 'Mumbai Central', risk: 'High', confidence: 92, status: 'active' },
-                  { id: 'P2024-002', location: 'Delhi Nehru Place', risk: 'Medium', confidence: 78, status: 'monitoring' },
-                  { id: 'P2024-003', location: 'Bangalore MG Road', risk: 'Low', confidence: 65, status: 'resolved' },
-                  { id: 'P2024-004', location: 'Chennai T Nagar', risk: 'High', confidence: 88, status: 'active' },
-                ].map((prediction, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <div>
-                        <p className="font-medium text-gray-900">{prediction.id}</p>
-                        <p className="text-sm text-gray-600">{prediction.location}</p>
+        {/* Geospatial and Alert Monitoring */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <GeoAnalyticsMap />
+          <AlertMonitoring />
+        </div>
+
+        {/* Recent Predictions */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Eye className="h-5 w-5 text-blue-600 mr-2" />
+              Recent Predictions & System Status
+            </CardTitle>
+            <CardDescription>Latest AI predictions and external system connectivity</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Predictions */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-4">Latest AI Predictions</h4>
+                <div className="space-y-3">
+                  {[
+                    { id: 'P2024-001', location: 'Mumbai Central', risk: 'High', confidence: 92, status: 'active' },
+                    { id: 'P2024-002', location: 'Delhi Nehru Place', risk: 'Medium', confidence: 78, status: 'monitoring' },
+                    { id: 'P2024-003', location: 'Bangalore MG Road', risk: 'Low', confidence: 65, status: 'resolved' },
+                    { id: 'P2024-004', location: 'Chennai T Nagar', risk: 'High', confidence: 88, status: 'active' },
+                  ].map((prediction, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <div>
+                          <p className="font-medium text-gray-900">{prediction.id}</p>
+                          <p className="text-sm text-gray-600">{prediction.location}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={prediction.risk === 'High' ? 'destructive' : prediction.risk === 'Medium' ? 'warning' : 'success'}
+                          className="text-xs"
+                        >
+                          {prediction.risk}
+                        </Badge>
+                        <p className="text-xs text-gray-500 mt-1">{prediction.confidence}% confidence</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge
-                        variant={prediction.risk === 'High' ? 'destructive' : prediction.risk === 'Medium' ? 'warning' : 'success'}
-                        className="text-xs"
-                      >
-                        {prediction.risk}
-                      </Badge>
-                      <p className="text-xs text-gray-500 mt-1">{prediction.confidence}% confidence</p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Network className="h-5 w-5 text-purple-600 mr-2" />
-                System Integration Status
-              </CardTitle>
-              <CardDescription>Connectivity with external systems</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { name: 'NCRP Integration', status: 'connected', latency: '45ms' },
-                  { name: 'CFCFRMS Banking', status: 'connected', latency: '120ms' },
-                  { name: 'I4C Database', status: 'connected', latency: '78ms' },
-                  { name: 'NPCI API', status: 'connected', latency: '32ms' },
-                  { name: 'Kafka Pipeline', status: 'connected', latency: '5ms' },
-                ].map((system, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        system.status === 'connected' ? 'bg-green-500' : 'bg-red-500'
-                      } animate-pulse`} />
-                      <span className="font-medium text-gray-900">{system.name}</span>
+              {/* System Integration Status */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-4">External System Connectivity</h4>
+                <div className="space-y-3">
+                  {[
+                    { name: 'NCRP Integration', status: 'connected', latency: '45ms' },
+                    { name: 'CFCFRMS Banking', status: 'connected', latency: '120ms' },
+                    { name: 'I4C Database', status: 'connected', latency: '78ms' },
+                    { name: 'NPCI API', status: 'connected', latency: '32ms' },
+                    { name: 'Kafka Pipeline', status: 'connected', latency: '5ms' },
+                  ].map((system, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          system.status === 'connected' ? 'bg-green-500' : 'bg-red-500'
+                        } animate-pulse`} />
+                        <span className="font-medium text-gray-900">{system.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="success" className="text-xs">
+                          {system.status}
+                        </Badge>
+                        <p className="text-xs text-gray-500 mt-1">{system.latency}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant="success" className="text-xs">
-                        {system.status}
-                      </Badge>
-                      <p className="text-xs text-gray-500 mt-1">{system.latency}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
