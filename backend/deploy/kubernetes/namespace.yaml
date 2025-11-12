@@ -1,0 +1,12 @@
+---
+# Project AEGIS Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aegis
+  labels:
+    name: aegis
+    environment: production
+    project: aegis
+  annotations:
+    description: "Project AEGIS - Advanced Cybercrime Response System"
