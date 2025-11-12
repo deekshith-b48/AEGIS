@@ -33,6 +33,6 @@
     "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
-    "@types/maplibre-gl": "^2.5.0"
+    "@types/maplibre-gl": "^3.0.0"
   }
 }
