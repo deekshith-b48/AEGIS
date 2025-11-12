@@ -5,6 +5,7 @@ from app.services.geospatial import find_nearby_atms, calculate_distance, create
 from datetime import datetime, timedelta
 import uuid
 import random
+import math
 
 class PredictionEngine:
     def __init__(self, db: Session):
