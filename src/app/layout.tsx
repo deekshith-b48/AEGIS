@@ -105,6 +105,12 @@ export default function RootLayout({
                   >
                     LEA Dashboard
                   </Link>
+                  <Link
+                    href="/dashboard"
+                    className="text-gray-700 hover:text-orange-600 transition-colors duration-200 font-medium"
+                  >
+                    Analytics
+                  </Link>
                 </div>
                 {/* Mobile menu button */}
                 <div className="md:hidden">
